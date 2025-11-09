@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produtos | Alfaiataria</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header class="main-header">
+        <div class="logo">Alfaiataria</div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="produtos.html" class="active">Produtos</a></li>
+                <li><a href="usuarios.html">Usuários</a></li>
+                <li><a href="grupos.html">Grupos</a></li>
+                <li><a href="index.html" class="logout">Sair</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="content fade-in">
+        <h1>Gerenciar Produtos</h1>
+
+        <form class="crud-form">
+            <input type="text" placeholder="Nome do produto" required>
+            <input type="text" placeholder="Categoria" required>
+            <input type="number" placeholder="Preço (R$)" required>
+            <button class="btn">Adicionar</button>
+        </form>
+
+        <table class="crud-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Categoria</th>
+                    <th>Preço</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Blusa Social</td>
+                    <td>Blusa</td>
+                    <td>199,90</td>
+                    <td>
+                        <button class="btn small">Editar</button>
+                        <button class="btn small danger">Excluir</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </main>
+
+    <script src="js/main.js"></script>
+</body>
+
+</html>
