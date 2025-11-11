@@ -111,28 +111,28 @@ CREATE INDEX idx_produtos_categoria ON Produtos(Categoria);
 
 DELIMITER //
 
--- 1) Retorna o estoque disponível do produto
-CREATE FUNCTION fn_estoque_disponivel(p_IDProduto INT)
-RETURNS INT
-DETERMINISTIC
-BEGIN
-  DECLARE v INT;
-  SELECT Estoque INTO v FROM Produtos WHERE IDProduto = p_IDProduto;
-  RETURN IFNULL(v, 0);
-END//
-
--- 2) Calcula o total teórico da venda (soma de itens)
-CREATE FUNCTION fn_total_venda(p_IDVenda INT)
+CREATE FUNCTION fn_total_vendas_dia()
 RETURNS DOUBLE
 DETERMINISTIC
 BEGIN
-  DECLARE v_total DOUBLE;
-  SELECT IFNULL(SUM(Quantidade * PrecoUnitario),0)
-    INTO v_total
-    FROM ItensVenda
-    WHERE IDVenda = p_IDVenda;
-  RETURN v_total;
+  RETURN (
+    SELECT IFNULL(SUM(Total), 0)
+    FROM Vendas
+    WHERE DATE(DataVenda) = CURDATE()
+  );
 END//
+
+
+CREATE FUNCTION fn_qtd_produtos_disponiveis()
+RETURNS INT
+DETERMINISTIC
+BEGIN
+  RETURN (
+    SELECT IFNULL(SUM(Estoque), 0)
+    FROM Produtos
+  );
+END//
+
 
 -- 3) Aplica desconto percentual (com limites de 0 a 90%)
 CREATE FUNCTION fn_preco_com_desconto(p_preco DOUBLE, p_pct DOUBLE)
