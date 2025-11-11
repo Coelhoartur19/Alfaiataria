@@ -43,6 +43,8 @@ CREATE TABLE Produtos (
   CriadoEm TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+alter table Produtos drop column CriadoEm;
+
 CREATE TABLE Vendas (
   IDVenda INT PRIMARY KEY AUTO_INCREMENT,
   IDCliente INT NOT NULL,
