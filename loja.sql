@@ -187,84 +187,72 @@ END//
 DELIMITER ;
 
 -- PROCEDURES
+DROP PROCEDURE IF EXISTS sp_ajustar_estoque;
+DROP PROCEDURE IF EXISTS sp_criar_venda;
+DROP PROCEDURE IF EXISTS sp_adicionar_item_venda;
+DROP PROCEDURE IF EXISTS sp_recalcular_total_venda;
 
 DELIMITER //
 
--- 1 Ajuste manual de estoque (entrada/saída)
-CREATE PROCEDURE sp_ajustar_estoque (
+-- 1) Cadastrar produto
+DROP PROCEDURE IF EXISTS cadastrar_produto//
+CREATE PROCEDURE cadastrar_produto (
+  IN p_Nome VARCHAR(120),
+  IN p_Descricao TEXT,
+  IN p_Preco DOUBLE,
+  IN p_Estoque INT
+)
+BEGIN
+  INSERT INTO Produtos (Nome, Descricao, Preco, Estoque)
+  VALUES (p_Nome, p_Descricao, p_Preco, p_Estoque);
+
+  SELECT LAST_INSERT_ID() AS IDProduto, 'Produto cadastrado com sucesso!' AS Mensagem;
+END//
+
+-- 2) Deletar produto
+DROP PROCEDURE IF EXISTS deletar_produto//
+CREATE PROCEDURE deletar_produto (
+  IN p_IDProduto INT
+)
+BEGIN
+  DELETE FROM Produtos
+  WHERE IDProduto = p_IDProduto;
+
+  SELECT CONCAT('Produto ID ', p_IDProduto, ' deletado!') AS Mensagem;
+END//
+
+-- 3) Editar produto completo (nome, descrição, preço, estoque)
+DROP PROCEDURE IF EXISTS editar_produto//
+CREATE PROCEDURE editar_produto (
   IN p_IDProduto INT,
-  IN p_Tipo ENUM('Entrada','Saída'),
-  IN p_Quantidade INT
+  IN p_Nome VARCHAR(120),
+  IN p_Descricao TEXT,
+  IN p_Preco DOUBLE,
+  IN p_Estoque INT
 )
 BEGIN
-  IF p_Tipo = 'Entrada' THEN
-    UPDATE Produtos SET Estoque = Estoque + p_Quantidade
-    WHERE IDProduto = p_IDProduto;
+  UPDATE Produtos
+  SET Nome = p_Nome,
+      Descricao = p_Descricao,
+      Preco = p_Preco,
+      Estoque = p_Estoque
+  WHERE IDProduto = p_IDProduto;
 
-    INSERT INTO MovimentacoesEstoque (IDProduto, TipoMovimentacao, Quantidade)
-    VALUES (p_IDProduto, 'Entrada', p_Quantidade);
-
-  ELSEIF p_Tipo = 'Saída' THEN
-    IF fn_estoque_disponivel(p_IDProduto) < p_Quantidade THEN
-      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Estoque insuficiente para saída manual.';
-    END IF;
-
-    UPDATE Produtos SET Estoque = Estoque - p_Quantidade
-    WHERE IDProduto = p_IDProduto;
-
-    INSERT INTO MovimentacoesEstoque (IDProduto, TipoMovimentacao, Quantidade)
-    VALUES (p_IDProduto, 'Saída', p_Quantidade);
-
-  ELSE
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'TipoMovimentacao inválido. Use Entrada ou Saída.';
-  END IF;
+  SELECT CONCAT('Produto ID ', p_IDProduto, ' atualizado!') AS Mensagem;
 END//
 
--- 2 Cria a venda (retorna ID gerado via SELECT)
-CREATE PROCEDURE sp_criar_venda (
-  IN  p_IDCliente INT,
-  IN  p_IDFuncionario INT
-)
-BEGIN
-  INSERT INTO Vendas (IDCliente, IDFuncionario, Total)
-  VALUES (p_IDCliente, p_IDFuncionario, 0);
-
-  SELECT LAST_INSERT_ID() AS IDVenda;
-END//
-
--- 3 Adiciona item à venda; usa preço do produto se passar 0; atualiza Total
-CREATE PROCEDURE sp_adicionar_item_venda (
-  IN p_IDVenda INT,
+-- 4) Editar somente a descrição do produto
+DROP PROCEDURE IF EXISTS editar_descricao//
+CREATE PROCEDURE editar_descricao (
   IN p_IDProduto INT,
-  IN p_Quantidade INT,
-  IN p_PrecoUnitario DOUBLE
+  IN p_Descricao TEXT
 )
 BEGIN
-  DECLARE v_preco DOUBLE;
+  UPDATE Produtos
+  SET Descricao = p_Descricao
+  WHERE IDProduto = p_IDProduto;
 
-  IF p_PrecoUnitario IS NULL OR p_PrecoUnitario <= 0 THEN
-    SELECT Preco INTO v_preco FROM Produtos WHERE IDProduto = p_IDProduto;
-  ELSE
-    SET v_preco = p_PrecoUnitario;
-  END IF;
-
-  INSERT INTO ItensVenda (IDVenda, IDProduto, Quantidade, PrecoUnitario)
-  VALUES (p_IDVenda, p_IDProduto, p_Quantidade, v_preco);
-
-  -- Atualiza Total incrementalmente
-  UPDATE Vendas
-  SET Total = Total + (p_Quantidade * v_preco)
-  WHERE IDVenda = p_IDVenda;
-END//
-
--- 4 Recalcula Total a partir dos itens usando a FUNCTION
-CREATE PROCEDURE sp_recalcular_total_venda (
-  IN p_IDVenda INT
-)
-BEGIN
-  UPDATE Vendas
-  SET Total = fn_total_venda(p_IDVenda)
-  WHERE IDVenda = p_IDVenda;
+  SELECT CONCAT('Descrição do produto ID ', p_IDProduto, ' atualizada!') AS Mensagem;
 END//
 
 DELIMITER ;
