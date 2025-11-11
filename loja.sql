@@ -284,10 +284,6 @@ CREATE USER 'gerencia'@'localhost' IDENTIFIED BY 'gerencia';
 CREATE USER 'funcionario'@'localhost' IDENTIFIED BY 'funcionario';
 CREATE USER 'cliente'@'localhost' IDENTIFIED BY 'cliente';
 
-CREATE USER 'gerencia'@'192.168.1.%' IDENTIFIED BY 'gerencia';
-CREATE USER 'funcionario'@'192.168.1.%' IDENTIFIED BY 'funcionario';
-CREATE USER 'cliente'@'192.168.1.%' IDENTIFIED BY 'cliente';
-
 grant all on loja.* to gerencia@localhost;
 grant select on loja.vw_produtos_funcionario TO funcionario@localhost ;
 grant select on loja.Clientes TO funcionario@localhost;
@@ -296,13 +292,6 @@ grant select , INSERT, UPDATE, DELETE ON loja.Vendas    TO funcionario@localhost
 grant select , INSERT, UPDATE, DELETE ON loja.ItensVenda TO funcionario@localhost;
 grant select on loja.vw_produtos_cliente TO cliente@localhost;
 
-grant all on loja.* to 'gerencia'@'192.168.1.%';
-grant select on loja.vw_produtos_funcionario TO 'funcionario'@'192.168.1.%' ;
-grant select on loja.Clientes TO 'funcionario'@'192.168.1.%';
-grant select on loja.Funcionarios TO 'funcionario'@'192.168.1.%';
-grant select , INSERT, UPDATE, DELETE ON loja.Vendas    TO 'funcionario'@'192.168.1.%';
-grant select , INSERT, UPDATE, DELETE ON loja.ItensVenda TO 'funcionario'@'192.168.1.%';
-grant select on loja.vw_produtos_cliente TO 'cliente'@'192.168.1.%';
 
 insert into grupos_usuarios (NomeGrupo, Descricao)
 values ('Administrador','Acesso administrativo'),
@@ -330,8 +319,8 @@ CREATE OR REPLACE VIEW vw_front_grupos AS
 SELECT g.IDGrupo AS id, g.NomeGrupo AS nome, g.Descricao AS descricao
 FROM grupos_usuarios g;
 
-grant select on loja.vw_front_produtos to 'funcionario'@'192.168.1.%', 'cliente'@'192.168.1.%';
+grant select on loja.vw_front_produtos to 'funcionario'@'localhost', 'cliente'@'localhost';
 grant select on loja.vw_front_usuarios to 'gerencia'@'localhost';   -- geralmente só gerência enxerga usuários
-grant select on loja.vw_front_grupos   to 'gerencia'@'localhost', 'funcionario'@'192.168.1.%', 'cliente'@'192.168.1.%';
+grant select on loja.vw_front_grupos   to 'gerencia'@'localhost', 'funcionario'@'localhost', 'cliente'@'localhost';
 
 flush privileges;
