@@ -284,6 +284,19 @@ CREATE USER 'gerencia'@'localhost' IDENTIFIED BY 'gerencia';
 CREATE USER 'funcionario'@'localhost' IDENTIFIED BY 'funcionario';
 CREATE USER 'cliente'@'localhost' IDENTIFIED BY 'cliente';
 
+create user 'pedro'@'26.102.205.190' identified by 'pedro1234ger';
+grant all on loja.* to 'pedro'@'26.102.205.190';
+
+create user 'david'@'26.4.235.12' identified by 'beckgerencia!';
+grant all on loja.* to 'david'@'26.4.235.12';
+
+create user 'note'@'26.133.40.164' identified by 'noteger123';
+grant all on loja.* to 'note'@'26.133.40.164';
+
+CREATE USER 'gerencia'@'192.168.1.%' IDENTIFIED BY 'gerencia';
+CREATE USER 'funcionario'@'192.168.1.%' IDENTIFIED BY 'funcionario';
+CREATE USER 'cliente'@'192.168.1.%' IDENTIFIED BY 'cliente';
+
 grant all on loja.* to gerencia@localhost;
 grant select on loja.vw_produtos_funcionario TO funcionario@localhost ;
 grant select on loja.Clientes TO funcionario@localhost;
