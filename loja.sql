@@ -82,6 +82,13 @@ CREATE TABLE MovimentacoesEstoque (
   FOREIGN KEY (IDProduto) REFERENCES Produtos(IDProduto)
 );
 
+CREATE TABLE IF NOT EXISTS AvisosEstoque (
+  IDAviso INT PRIMARY KEY AUTO_INCREMENT,
+  IDProduto INT NOT NULL,
+  Mensagem VARCHAR(255) NOT NULL,
+  DataAviso TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (IDProduto) REFERENCES Produtos(IDProduto)
+);
 
 ALTER TABLE Produtos
   ADD COLUMN Categoria VARCHAR(80) NULL AFTER Nome;
@@ -139,60 +146,40 @@ END//
 
 DELIMITER ;
 
--- TRIGGERS (estoque)[
-
 DELIMITER //
-
--- BEFORE: valida estoque e define preço se vier 0
-
-CREATE TRIGGER trg_itensvenda_before_insert
-BEFORE INSERT ON ItensVenda
-FOR EACH ROW
-BEGIN
-  DECLARE v_estoque INT;
-  DECLARE v_preco DOUBLE;
-
-  SELECT Estoque, Preco INTO v_estoque, v_preco
-  FROM Produtos
-  WHERE IDProduto = NEW.IDProduto
-  FOR UPDATE;
-
-  IF v_estoque IS NULL THEN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Produto inexistente.';
-  END IF;
-
-  IF NEW.Quantidade > v_estoque THEN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Estoque insuficiente.';
-  END IF;
-
-  IF NEW.PrecoUnitario IS NULL OR NEW.PrecoUnitario = 0 THEN
-    SET NEW.PrecoUnitario = v_preco;
-  END IF;
-END//
-
--- AFTER: baixa estoque e conta saída
-
-CREATE TRIGGER trg_itensvenda_after_insert
+  
+-- TRIGGERS (estoque)[
+DROP TRIGGER IF EXISTS trg_itensvenda_before_insert//
+DROP TRIGGER IF EXISTS trg_itensvenda_after_insert//
+  
+  CREATE TRIGGER trg_itensvenda_after_insert
 AFTER INSERT ON ItensVenda
 FOR EACH ROW
 BEGIN
+  -- baixa estoque do produto
   UPDATE Produtos
   SET Estoque = Estoque - NEW.Quantidade
   WHERE IDProduto = NEW.IDProduto;
 
+  -- registra movimentação de saída
   INSERT INTO MovimentacoesEstoque (IDProduto, TipoMovimentacao, Quantidade)
   VALUES (NEW.IDProduto, 'Saída', NEW.Quantidade);
 END//
 
+/* 2) NOVA: avisa quando o estoque acabar (zerar) */
+DROP TRIGGER IF EXISTS trg_produtos_after_update//
+CREATE TRIGGER trg_produtos_after_update
+AFTER UPDATE ON Produtos
+FOR EACH ROW
+BEGIN
+  -- quando sair de >0 para <=0, gera um alerta
+  IF OLD.Estoque > 0 AND NEW.Estoque <= 0 THEN
+    INSERT INTO AvisosEstoque (IDProduto, Mensagem)
+    VALUES (NEW.IDProduto, CONCAT('Estoque zerado do produto ID ', NEW.IDProduto));
+  END IF;
+END//
+
 DELIMITER ;
-
--- PROCEDURES
-DROP PROCEDURE IF EXISTS sp_ajustar_estoque;
-DROP PROCEDURE IF EXISTS sp_criar_venda;
-DROP PROCEDURE IF EXISTS sp_adicionar_item_venda;
-DROP PROCEDURE IF EXISTS sp_recalcular_total_venda;
-
-DELIMITER //
 
 -- 1) Cadastrar produto
 DROP PROCEDURE IF EXISTS cadastrar_produto//
