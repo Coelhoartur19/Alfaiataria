@@ -232,20 +232,6 @@ BEGIN
   SELECT CONCAT('Produto ID ', p_IDProduto, ' atualizado!') AS Mensagem;
 END//
 
--- 4) Editar somente a descrição do produto
-DROP PROCEDURE IF EXISTS editar_descricao//
-CREATE PROCEDURE editar_descricao (
-  IN p_IDProduto INT,
-  IN p_Descricao TEXT
-)
-BEGIN
-  UPDATE Produtos
-  SET Descricao = p_Descricao
-  WHERE IDProduto = p_IDProduto;
-
-  SELECT CONCAT('Descrição do produto ID ', p_IDProduto, ' atualizada!') AS Mensagem;
-END//
-
 DELIMITER ;
 
 -- Views de acesso (cliente e funcionário)
