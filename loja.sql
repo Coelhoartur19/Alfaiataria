@@ -183,6 +183,7 @@ DELIMITER ;
 
 -- 1) Cadastrar produto
 DROP PROCEDURE IF EXISTS cadastrar_produto//
+  
 CREATE PROCEDURE cadastrar_produto (
   IN p_Nome VARCHAR(120),
   IN p_Descricao TEXT,
@@ -198,6 +199,8 @@ END//
 
 -- 2) Deletar produto
 DROP PROCEDURE IF EXISTS deletar_produto//
+
+  
 CREATE PROCEDURE deletar_produto (
   IN p_IDProduto INT
 )
@@ -210,6 +213,7 @@ END//
 
 -- 3) Editar produto completo (nome, descrição, preço, estoque)
 DROP PROCEDURE IF EXISTS editar_produto//
+
 CREATE PROCEDURE editar_produto (
   IN p_IDProduto INT,
   IN p_Nome VARCHAR(120),
