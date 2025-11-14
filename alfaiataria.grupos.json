@@ -1,0 +1,21 @@
+[{
+  "_id": {
+    "$oid": "6914c3661a7a9994c5824d40"
+  },
+  "nome": "Gerência",
+  "descricao": "Acesso total a todas as funções do sistema."
+},
+{
+  "_id": {
+    "$oid": "6914c36d1a7a9994c5824d42"
+  },
+  "nome": "Funcionário",
+  "descricao": "Pode registrar vendas, atender clientes e editar produtos."
+},
+{
+  "_id": {
+    "$oid": "6914c3731a7a9994c5824d44"
+  },
+  "nome": "Cliente",
+  "descricao": "Pode visualizar produtos e fazer compras online."
+}]

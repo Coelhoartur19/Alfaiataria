@@ -1,0 +1,11 @@
+[{
+  "_id": {
+    "$oid": "6914bbf11a7a9994c5824d28"
+  },
+  "nome": "Gustavo Henrique Lemos Xavier",
+  "grupo": "Gerência",
+  "email": "gustavo@admin.com",
+  "criadoEm": {
+    "$date": "2025-11-12T00:00:00.000Z"
+  }
+}]

@@ -1,0 +1,40 @@
+[{
+  "_id": {
+    "$oid": "6914c3821a7a9994c5824d47"
+  },
+  "nome": "Terno Slim Preto",
+  "categoria": "Roupas Masculinas",
+  "preco": 399.9,
+  "estoque": 12,
+  "ativo": true
+},
+{
+  "_id": {
+    "$oid": "6914c38d1a7a9994c5824d49"
+  },
+  "nome": "Camisa Social Azul",
+  "categoria": "Roupas Masculinas",
+  "preco": 159.9,
+  "estoque": 30,
+  "ativo": true
+},
+{
+  "_id": {
+    "$oid": "6914c3921a7a9994c5824d4b"
+  },
+  "nome": "Calça Alfaiataria Bege",
+  "categoria": "Roupas Masculinas",
+  "preco": 189.9,
+  "estoque": 20,
+  "ativo": true
+},
+{
+  "_id": {
+    "$oid": "6914c3971a7a9994c5824d4d"
+  },
+  "nome": "Vestido Midi Preto",
+  "categoria": "Roupas Femininas",
+  "preco": 279.9,
+  "estoque": 10,
+  "ativo": true
+}]
