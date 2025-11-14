@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Usuários | Alfaiataria</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="main-header">
+    <div class="logo">Alfaiataria</div>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="dashboard.html">Dashboard</a></li>
+        <li><a href="produtos.html">Produtos</a></li>
+        <li><a href="usuarios.html" class="active">Usuários</a></li>
+        <li><a href="grupos.html">Grupos</a></li>
+        <li><a href="index.html" class="logout">Sair</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="content fade-in">
+    <h1>Gerenciar Usuários</h1>
+
+    <form class="crud-form">
+      <input type="text" placeholder="Nome" required>
+      <input type="email" placeholder="E-mail" required>
+      <select>
+        <option>Administrador</option>
+        <option>Vendedor</option>
+        <option>Gerente</option>
+      </select>
+      <button class="btn">Adicionar</button>
+    </form>
+
+    <table class="crud-table">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Email</th>
+          <th>Grupo</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Administrador</td>
+          <td>admin@alfaiataria.com</td>
+          <td>Administrador</td>
+          <td>
+            <button class="btn small">Editar</button>
+            <button class="btn small danger">Excluir</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

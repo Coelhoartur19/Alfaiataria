@@ -1,0 +1,299 @@
+/* ===========================
+   ESTILO GERAL
+   =========================== */
+:root {
+    --cor-principal: #2c3e50;
+    /* Azul escuro sofisticado */
+    --cor-secundaria: #34495e;
+    /* Um tom mais suave */
+    --cor-destaque: #cfa15d;
+    /* Dourado suave pra dar um toque de classe */
+    --cor-fundo: #f4f4f4;
+    /* Fundo neutro e leve */
+    --cor-branca: #ffffff;
+    --cor-perigo: #e74c3c;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+}
+
+body {
+    background-color: var(--cor-fundo);
+    color: var(--cor-principal);
+}
+
+/* ===========================
+   TELA DE LOGIN
+   =========================== */
+.login-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.login-container {
+    background: var(--cor-branca);
+    padding: 2rem 3rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 350px;
+    animation: fadeIn 0.8s ease;
+}
+
+.login-container h1 {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    color: var(--cor-secundaria);
+    margin-bottom: 2rem;
+}
+
+.login-form input {
+    width: 100%;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.login-form input:focus {
+    border-color: var(--cor-destaque);
+    outline: none;
+    box-shadow: 0 0 6px rgba(207, 161, 93, 0.4);
+}
+
+.btn {
+    background-color: var(--cor-destaque);
+    color: var(--cor-branca);
+    border: none;
+    padding: 0.8rem 1.4rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+}
+
+.btn:hover {
+    background-color: #b6894f;
+    transform: translateY(-2px);
+}
+
+.note {
+    margin-top: 1rem;
+    color: #777;
+    font-size: 0.9rem;
+}
+
+/* ===========================
+   HEADER E NAVEGAÇÃO
+   =========================== */
+.main-header {
+    background-color: var(--cor-principal);
+    color: var(--cor-branca);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+}
+
+.logo {
+    font-size: 1.4rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 1.5rem;
+}
+
+.nav-links a {
+    color: var(--cor-branca);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.nav-links a:hover {
+    color: var(--cor-destaque);
+}
+
+.nav-links .active {
+    color: var(--cor-destaque);
+    font-weight: bold;
+}
+
+.logout {
+    background: var(--cor-perigo);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    transition: background 0.3s;
+}
+
+.logout:hover {
+    background: #c0392b;
+}
+
+/* ===========================
+   CONTEÚDO PRINCIPAL
+   =========================== */
+.content {
+    padding: 2rem;
+    animation: fadeIn 1s ease;
+}
+
+h1 {
+    margin-bottom: 1rem;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.card {
+    background: var(--cor-branca);
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card.hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* ===========================
+   FORMULÁRIOS DE CRUD
+   =========================== */
+.crud-form {
+    background: var(--cor-branca);
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    margin-bottom: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.crud-form input,
+.crud-form select {
+    flex: 1 1 200px;
+    padding: 0.7rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.crud-form input:focus,
+.crud-form select:focus {
+    border-color: var(--cor-destaque);
+    outline: none;
+    box-shadow: 0 0 6px rgba(207, 161, 93, 0.4);
+}
+
+/* ===========================
+   TABELA DE LISTAGEM
+   =========================== */
+.crud-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--cor-branca);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.crud-table th,
+.crud-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.crud-table th {
+    background-color: var(--cor-secundaria);
+    color: var(--cor-branca);
+    font-weight: 500;
+}
+
+.crud-table tr:hover {
+    background-color: #f9f9f9;
+}
+
+.btn.small {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+}
+
+.btn.danger {
+    background-color: var(--cor-perigo);
+}
+
+.btn.danger:hover {
+    background-color: #c0392b;
+}
+
+/* ===========================
+   LISTA DE GRUPOS
+   =========================== */
+.group-list {
+    list-style: none;
+    background: var(--cor-branca);
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.group-list li {
+    padding: 0.8rem;
+    border-bottom: 1px solid #eee;
+}
+
+.group-list li:last-child {
+    border-bottom: none;
+}
+
+/* ===========================
+   ANIMAÇÕES SUAVES
+   =========================== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.8s ease;
+}
+
+/* ===========================
+   RESPONSIVIDADE BÁSICA
+   =========================== */
+@media (max-width: 600px) {
+    .crud-form {
+        flex-direction: column;
+    }
+
+    .nav-links {
+        flex-wrap: wrap;
+        gap: 0.8rem;
+    }
+}
