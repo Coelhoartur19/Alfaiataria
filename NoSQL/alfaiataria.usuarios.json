@@ -1,0 +1,40 @@
+[{
+  "_id": {
+    "$oid": "6914bbf11a7a9994c5824d28"
+  },
+  "nome": "Gustavo Henrique Lemos Xavier",
+  "grupo": "Gerência",
+  "email": "gustavo@admin.com"
+},
+{
+  "_id": {
+    "$oid": "69174c0c099297c34947303f"
+  },
+  "nome": "Artur Coelho",
+  "grupo": "Gerência",
+  "email": "artur@admin.com"
+},
+{
+  "_id": {
+    "$oid": "69174c14099297c349473041"
+  },
+  "nome": "David Beckhan",
+  "grupo": "Gerência",
+  "email": "david@admin.com"
+},
+{
+  "_id": {
+    "$oid": "69174c19099297c349473043"
+  },
+  "nome": "Jefferson",
+  "grupo": "Cliente",
+  "email": "jefferson@cliente.com"
+},
+{
+  "_id": {
+    "$oid": "69174c1f099297c349473045"
+  },
+  "nome": "Andreas",
+  "grupo": "Funcionario",
+  "email": "andreas@funcionario.com"
+}]

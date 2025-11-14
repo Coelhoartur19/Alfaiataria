@@ -1,0 +1,59 @@
+[{
+  "_id": {
+    "$oid": "6914c3a41a7a9994c5824d50"
+  },
+  "cliente": "Gustavo Henrique Lemos Xavier",
+  "data": {
+    "$date": "2025-11-12T15:00:00.000Z"
+  },
+  "status": "PAGO",
+  "itens": [
+    {
+      "produto": "Terno Slim Preto",
+      "quantidade": 1,
+      "precoUnit": 399.9
+    },
+    {
+      "produto": "Camisa Social Azul",
+      "quantidade": 2,
+      "precoUnit": 159.9
+    }
+  ],
+  "total": 719.7
+},
+{
+  "_id": {
+    "$oid": "6914c3aa1a7a9994c5824d52"
+  },
+  "cliente": "Mariana Souza",
+  "data": {
+    "$date": "2025-11-10T17:30:00.000Z"
+  },
+  "status": "PAGO",
+  "itens": [
+    {
+      "produto": "Vestido Midi Preto",
+      "quantidade": 1,
+      "precoUnit": 279.9
+    }
+  ],
+  "total": 279.9
+},
+{
+  "_id": {
+    "$oid": "6914c3af1a7a9994c5824d54"
+  },
+  "cliente": "João Oliveira",
+  "data": {
+    "$date": "2025-11-09T13:15:00.000Z"
+  },
+  "status": "ABERTO",
+  "itens": [
+    {
+      "produto": "Calça Alfaiataria Bege",
+      "quantidade": 1,
+      "precoUnit": 189.9
+    }
+  ],
+  "total": 189.9
+}]
