@@ -1,65 +1,74 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Alfaiataria</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login | Alfaiataria</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body class="login-body">
-    <div class="login-container">
-        <h1>Alfaiataria</h1>
-        <p class="subtitle">A elegância começa aqui</p>
+  <div class="login-container">
+    <h1>Alfaiataria</h1>
+    <p class="subtitle">A elegância começa aqui</p>
 
-        <!-- Formulário de login -->
-        <form id="formLogin" class="login-form">
-            <input type="email" id="usuario" placeholder="E-mail" required>
-            <input type="password" id="senha" placeholder="Senha" required>
-            <button type="submit" class="btn">Entrar</button>
-        </form>
+    <form id="formLogin" class="login-form">
+      <input type="email" id="email" placeholder="E-mail" required />
+      <input type="password" id="senha" placeholder="Senha" required />
+      <button type="submit" class="btn">Entrar</button>
+      <p id="erroLogin" class="erro-msg" style="display:none;"></p>
+    </form>
 
-        <p class="note">Use suas credenciais para acessar o sistema</p>
-    </div>
+    <p class="note">Use suas credenciais para acessar o sistema</p>
+    <p style="margin-top:20px;text-align:center;">
+    </p>
+  </div>
 
-    <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const form = document.getElementById("formLogin");
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("formLogin");
+  const campoEmail = document.getElementById("email");
+  const campoSenha = document.getElementById("senha");
+  const erro = document.getElementById("erroLogin");
 
-        form.addEventListener("submit", async (e) => {
-            e.preventDefault();
+  function mostrarErro(msg) {
+    erro.innerText = msg;
+    erro.style.display = "block";
+    setTimeout(() => erro.style.display = "none", 4500);
+  }
 
-            const usuario = document.getElementById("usuario").value;
-            const senha = document.getElementById("senha").value;
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = campoEmail.value.trim();
+    const senha = campoSenha.value.trim();
 
-            try {
-                const response = await fetch("http://127.0.0.1:8000/api/login", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ usuario, senha }),
-                });
+    if (!email || !senha) { mostrarErro("Preencha todos os campos."); return; }
+    if (!email.includes("@")) { mostrarErro("E-mail inválido."); return; }
 
-                const data = await response.json();
+    try {
+      const resp = await fetch("http://127.0.0.1:8000/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ usuario: email, senha })
+});
 
-                if (response.ok) {
-                    alert(data.mensagem || "Login realizado com sucesso!");
-                    
-                    // ✅ Salva o usuário logado
-                    localStorage.setItem("usuarioLogado", usuario);
 
-                    // ✅ Redireciona para o dashboard
-                    window.location.href = "dashboard.html";
-                } else {
-                    alert(data.detail || "Erro ao fazer login. Verifique suas credenciais.");
-                }
-            } catch (error) {
-                console.error("Erro ao conectar ao backend:", error);
-                alert("Não foi possível conectar ao servidor.");
-            }
-        });
-    });
-    </script>
+      const data = await resp.json().catch(()=>null);
 
-    <script src="js/main.js"></script>
+      if (resp.ok && data && data.usuario) {
+        // salva o objeto usuario completo
+        localStorage.setItem("usuario", JSON.stringify(data.usuario));
+        // redireciona para dashboard
+        window.location.href = "dashboard.html";
+      } else {
+        mostrarErro(data?.detail || data?.mensagem || "Credenciais inválidas.");
+      }
+    } catch (err) {
+      console.error(err);
+      mostrarErro("Erro ao conectar ao servidor.");
+    }
+  });
+});
+
+</script>
 </body>
 </html>

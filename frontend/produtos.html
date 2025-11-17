@@ -15,17 +15,18 @@
         <ul class="nav-links">
             <li><a href="dashboard.html">Dashboard</a></li>
             <li><a href="produtos.html" class="active">Produtos</a></li>
-            <li><a href="usuarios.html">Usuários</a></li>
-            <li><a href="grupos.html">Grupos</a></li>
+            <li id="menu-usuarios"><a href="usuarios.html">Usuários</a></li>
+            <li id="menu-grupos"><a href="grupos.html">Grupos</a></li>
+            <li id="menu-vendas"><a href="vendas.html">Vendas</a></li>
             <li><a href="index.html" class="logout">Sair</a></li>
         </ul>
     </nav>
 </header>
 
 <main class="content fade-in">
-    <h1>Gerenciar Produtos</h1>
+    <h1>Produtos</h1>
 
-    <!-- FORM CORRIGIDO PARA BATER COM SEU main.js -->
+    <!-- FORMULÁRIO (somente admin/vendedor) -->
     <form class="crud-form" id="form-produto">
         <input type="text" id="nome-produto" placeholder="Nome do produto" required>
         <input type="text" id="categoria-produto" placeholder="Categoria" required>
@@ -49,136 +50,203 @@
     </table>
 </main>
 
+<!-- ========== MODAL DE EDIÇÃO ========== -->
+<div id="modal-editar" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h2>Editar Produto</h2>
+
+        <input type="text" id="edit-nome">
+        <input type="text" id="edit-categoria">
+        <input type="number" id="edit-preco">
+
+        <button class="btn" id="salvar-edicao">Salvar</button>
+        <button class="btn danger" id="cancelar-edicao">Cancelar</button>
+    </div>
+</div>
+
 <script>
-const API_URL = "http://127.0.0.1:8000/api";
+const API = "http://127.0.0.1:8000/api";
 
+let usuarioLogado = null;
+let grupo = null;
+
+// ================================
+// VERIFICAR LOGIN
+// ================================
 document.addEventListener("DOMContentLoaded", () => {
+    usuarioLogado = JSON.parse(localStorage.getItem("usuario"));
 
-    // --- Proteção de Login ---
-    const user = localStorage.getItem("usuarioLogado");
-    if (!user) {
-        alert("Você precisa estar logado para acessar esta página!");
+    if (!usuarioLogado) {
+        alert("Você precisa estar logado!");
         window.location.href = "index.html";
         return;
     }
 
-    const tabela = document.getElementById("lista-produtos");
-    const form = document.getElementById("form-produto");
+    grupo = usuarioLogado.grupo_id;
 
-    // ============================================================
-    // CARREGAR PRODUTOS
-    // ============================================================
-    async function carregarProdutos() {
-        tabela.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
+    // ================================
+    // CONTROLE DE MENUS
+    // ================================
+    if (grupo === 3) { // Cliente
+        document.getElementById("menu-vendas").style.display = "none";
+        document.getElementById("menu-usuarios").style.display = "none";
+        document.getElementById("menu-grupos").style.display = "none";
+    }
 
-        try {
-            const response = await fetch(`${API_URL}/produtos`);
-            const produtos = await response.json();  // SUA API RETORNA LISTA DIRETA
-
-            tabela.innerHTML = "";
-
-            if (!Array.isArray(produtos) || produtos.length === 0) {
-                tabela.innerHTML = "<tr><td colspan='5'>Nenhum produto encontrado.</td></tr>";
-                return;
-            }
-
-            produtos.forEach(p => {
-                const tr = document.createElement("tr");
-
-                tr.innerHTML = `
-                    <td>${p.id}</td>
-                    <td>${p.nome}</td>
-                    <td>${p.categoria}</td>
-                    <td>R$ ${p.preco.toFixed(2)}</td>
-                    <td>
-                        <button class="btn small danger excluir" data-id="${p.id}">Excluir</button>
-                    </td>
-                `;
-
-                tabela.appendChild(tr);
-            });
-
-        } catch (erro) {
-            console.error("Erro ao carregar produtos:", erro);
-            tabela.innerHTML = "<tr><td colspan='5'>Erro ao conectar ao servidor.</td></tr>";
-        }
+    // FORMULÁRIO: somente admin e vendedor
+    if (grupo === 3) {
+        document.getElementById("form-produto").style.display = "none";
     }
 
     carregarProdutos();
+});
 
-    // ============================================================
-    // ADICIONAR PRODUTO
-    // ============================================================
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
+// ================================
+// CARREGAR PRODUTOS
+// ================================
+async function carregarProdutos() {
+    const tabela = document.getElementById("lista-produtos");
+    tabela.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
 
-        const nome = document.getElementById("nome-produto").value;
-        const categoria = document.getElementById("categoria-produto").value;
-        const preco = parseFloat(document.getElementById("preco-produto").value);
+    const resp = await fetch(`${API}/produtos`);
+    const produtos = await resp.json();
 
-        try {
-            const response = await fetch(`${API_URL}/produtos`, {
-                method: "POST",
+    tabela.innerHTML = "";
+
+    produtos.forEach(p => {
+
+        let botoes = "";
+
+        // ADMIN e VENDEDOR — editar + excluir (excluir apenas admin)
+        if (grupo === 1 || grupo === 2) {
+            botoes += `
+                <button class="btn small edit editar" data-id="${p.id}" data-nome="${p.nome}" data-cat="${p.categoria}" data-preco="${p.preco}">
+                    Editar
+                </button>
+            `;
+            if (grupo === 1) {
+                botoes += `
+                <button class="btn small danger excluir" data-id="${p.id}">
+                    Excluir
+                </button>`;
+            }
+        }
+
+        // CLIENTE — comprar
+        if (grupo === 3) {
+            botoes = `
+                <button class="btn small buy comprar" data-id="${p.id}">
+                    Comprar
+                </button>
+            `;
+        }
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${p.id}</td>
+            <td>${p.nome}</td>
+            <td>${p.categoria}</td>
+            <td>R$ ${p.preco.toFixed(2)}</td>
+            <td>${botoes}</td>
+        `;
+        tabela.appendChild(tr);
+    });
+}
+
+// ================================
+// ADICIONAR PRODUTO
+// ================================
+document.getElementById("form-produto")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const nome = document.getElementById("nome-produto").value;
+    const categoria = document.getElementById("categoria-produto").value;
+    const preco = parseFloat(document.getElementById("preco-produto").value);
+
+    const resp = await fetch(`${API}/produtos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nome, categoria, preco })
+    });
+
+    if (!resp.ok) {
+        alert("Erro ao cadastrar!");
+        return;
+    }
+
+    alert("Produto cadastrado!");
+    e.target.reset();
+    carregarProdutos();
+});
+
+// ================================
+// AÇÕES: EDITAR / EXCLUIR / COMPRAR
+// ================================
+document.addEventListener("click", async (e) => {
+
+    // ==================== EDITAR ====================
+    if (e.target.classList.contains("editar")) {
+        const id = e.target.dataset.id;
+
+        document.querySelector("#modal-editar").style.display = "flex";
+
+        document.querySelector("#edit-nome").value = e.target.dataset.nome;
+        document.querySelector("#edit-categoria").value = e.target.dataset.cat;
+        document.querySelector("#edit-preco").value = e.target.dataset.preco;
+
+        document.querySelector("#salvar-edicao").onclick = async () => {
+
+            const dados = {
+                nome: document.querySelector("#edit-nome").value,
+                categoria: document.querySelector("#edit-categoria").value,
+                preco: parseFloat(document.querySelector("#edit-preco").value),
+            };
+
+            const resp = await fetch(`${API}/produtos/${id}`, {
+                method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ nome, categoria, preco })
+                body: JSON.stringify(dados)
             });
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                alert(data.detail || "Erro ao cadastrar produto.");
+            if (!resp.ok) {
+                alert("Erro ao editar!");
                 return;
             }
 
-            alert("Produto cadastrado!");
-            form.reset();
+            alert("Produto atualizado!");
+            document.querySelector("#modal-editar").style.display = "none";
             carregarProdutos();
+        };
+    }
 
-        } catch (erro) {
-            console.error("Erro ao cadastrar:", erro);
-            alert("Erro ao conectar ao servidor.");
+    // ==================== CANCELAR EDIÇÃO ====================
+    if (e.target.id === "cancelar-edicao") {
+        document.querySelector("#modal-editar").style.display = "none";
+    }
+
+    // ==================== EXCLUIR (SOMENTE ADMIN) ====================
+    if (e.target.classList.contains("excluir")) {
+        if (grupo !== 1) return; // segurança extra
+
+        if (!confirm("Excluir produto?")) return;
+
+        const id = e.target.dataset.id;
+
+        const resp = await fetch(`${API}/produtos/${id}`, { method: "DELETE" });
+
+        if (!resp.ok) {
+            alert("Erro ao excluir!");
+            return;
         }
-    });
 
-    // ============================================================
-    // EXCLUIR PRODUTO
-    // ============================================================
-    tabela.addEventListener("click", async (e) => {
-        if (e.target.classList.contains("excluir")) {
-            const id = e.target.dataset.id;
+        alert("Produto excluído!");
+        carregarProdutos();
+    }
 
-            if (!confirm("Deseja realmente excluir?")) return;
-
-            try {
-                const response = await fetch(`${API_URL}/produtos/${id}`, {
-                    method: "DELETE"
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    alert(data.detail || "Erro ao excluir produto.");
-                    return;
-                }
-
-                alert("Produto excluído!");
-                carregarProdutos();
-
-            } catch (erro) {
-                alert("Erro ao conectar ao servidor.");
-            }
-        }
-    });
-
-    // ============================================================
-    // LOGOUT
-    // ============================================================
-    document.querySelectorAll(".logout").forEach(link => {
-        link.addEventListener("click", () => {
-            localStorage.removeItem("usuarioLogado");
-            window.location.href = "index.html";
-        });
-    });
+    // ==================== COMPRAR (CLIENTE) ====================
+    if (e.target.classList.contains("comprar")) {
+        alert("Produto adicionado ao carrinho! (função futura)");
+    }
 });
 </script>
 

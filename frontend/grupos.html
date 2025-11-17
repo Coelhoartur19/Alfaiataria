@@ -17,6 +17,7 @@
                 <li><a href="produtos.html">Produtos</a></li>
                 <li><a href="usuarios.html">Usuários</a></li>
                 <li><a href="grupos.html" class="active">Grupos</a></li>
+                <li id="menu-vendas"><a href="vendas.html">Vendas</a></li>
                 <li><a href="index.html" class="logout">Sair</a></li>
             </ul>
         </nav>
@@ -30,23 +31,20 @@
         </ul>
     </main>
 
-   <script>
-document.addEventListener("DOMContentLoaded", async () => {
-
-    const userEmail = localStorage.getItem("usuarioLogado");
-    if (!userEmail) {
-        alert("Você precisa estar logado!");
-        window.location.href = "index.html";
-        return;
-    }
+<script  src="main.js">
+// ===============================================
+// CARREGAR GRUPOS
+// ===============================================
+async function carregarGrupos() {
+    const lista = document.getElementById("lista-grupos");
+    lista.innerHTML = "<li>Carregando grupos...</li>";
 
     try {
         const response = await fetch("http://127.0.0.1:8000/api/grupos");
         const data = await response.json();
 
-        const grupos = data.grupos;  // <-- ESTA ERA A PARTE QUE FALTAVA
+        const grupos = data.grupos;
 
-        const lista = document.getElementById("lista-grupos");
         lista.innerHTML = "";
 
         if (!Array.isArray(grupos) || grupos.length === 0) {
@@ -56,29 +54,64 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         grupos.forEach(g => {
             const li = document.createElement("li");
-
             li.textContent = `${g.nome} — ID: ${g.id} — ${g.descricao}`;
-
             lista.appendChild(li);
         });
 
     } catch (error) {
         console.error("Erro ao carregar grupos:", error);
-        document.getElementById("lista-grupos").innerHTML =
-            "<li>Erro ao conectar ao servidor.</li>";
+        lista.innerHTML = "<li>Erro ao conectar ao servidor.</li>";
     }
-});
+}
 
-document.querySelectorAll(".logout").forEach(link => {
-    link.addEventListener("click", () => {
-        localStorage.removeItem("usuarioLogado");
+
+// ===============================================
+// VERIFICAR LOGIN E PERMISSÃO
+// ===============================================
+function verificarPermissoes() {
+    const usuario = JSON.parse(localStorage.getItem("usuario") || "null");
+
+    if (!usuario) {
+        alert("Você precisa estar logado!");
         window.location.href = "index.html";
+        return;
+    }
+
+    if (usuario.grupo_id !== 1) {
+        alert("Somente administradores podem acessar Grupos.");
+        window.location.href = "dashboard.html";
+        return;
+    }
+
+    // esconder vendas se for cliente
+    const menuVendas = document.getElementById("menu-vendas");
+    if (usuario.grupo_id === 3 && menuVendas) {
+        menuVendas.style.display = "none";
+    }
+}
+
+
+// ===============================================
+// LOGOUT
+// ===============================================
+function configurarLogout() {
+    document.querySelectorAll(".logout").forEach(link => {
+        link.addEventListener("click", () => {
+            localStorage.removeItem("usuario");
+            window.location.href = "index.html";
+        });
     });
+}
+
+
+// ===============================================
+// INICIALIZAÇÃO
+// ===============================================
+document.addEventListener("DOMContentLoaded", () => {
+    verificarPermissoes();
+    carregarGrupos();
+    configurarLogout();
 });
 </script>
-
-
-
-
 </body>
 </html>

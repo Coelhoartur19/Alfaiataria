@@ -15,7 +15,10 @@
       <li><a href="produtos.html">Produtos</a></li>
       <li><a href="usuarios.html" class="active">Usuários</a></li>
       <li><a href="grupos.html">Grupos</a></li>
+      <li id="menu-vendas"><a href="vendas.html">Vendas</a></li>
       <li><a href="index.html" class="logout">Sair</a></li>
+      
+
     </ul>
   </nav>
 </header>
@@ -29,9 +32,9 @@
     <input type="password" id="senha" placeholder="Senha" required />
 
     <select id="grupo">
-      <option value="1">Administrador</option>
+      <option value="1">Gerente</option>
       <option value="2">Vendedor</option>
-      <option value="3">Gerente</option>
+      <option value="3">Cliente</option>
     </select>
 
     <button class="btn" type="submit">Adicionar</button>
@@ -52,6 +55,41 @@
   </table>
 </main>
 
-<script src="main.js"></script>
+<script src="main.js">
+
+document.addEventListener("DOMContentLoaded", () => {
+    let usuario = JSON.parse(localStorage.getItem("usuario") || "null");
+
+    if (!usuario) {
+        alert("Você precisa estar logado!");
+        window.location.href = "index.html";
+        return;
+    }
+
+    if (usuario.grupo_id !== 1) {
+        alert("Somente administradores podem acessar Usuários.");
+        window.location.href = "dashboard.html";
+        return;
+    }
+});
+
+
+// ===== PERMISSÃO PARA MOSTRAR MENU "Vendas" =====
+document.addEventListener("DOMContentLoaded", () => {
+    const grupo = Number(localStorage.getItem("grupoUsuario"));
+    const menu = document.getElementById("menu-vendas");
+
+    if (grupo === 3) { // cliente
+        menu.style.display = "none";
+    }
+});
+
+const usuario = JSON.parse(localStorage.getItem("usuario") || "null");
+if (!usuario) { window.location.href = "index.html"; }
+const menuVendas = document.getElementById("menu-vendas");
+if (menuVendas && usuario.grupo_id === 3) menuVendas.style.display = "none";
+
+
+</script>
 </body>
 </html>

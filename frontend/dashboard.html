@@ -14,8 +14,9 @@
             <ul class="nav-links">
                 <li><a href="dashboard.html" class="active">Dashboard</a></li>
                 <li><a href="produtos.html">Produtos</a></li>
-                <li><a href="usuarios.html">Usuários</a></li>
-                <li><a href="grupos.html">Grupos</a></li>
+                <li><a href="usuarios.html" id="menu-usuarios">Usuários</a></li>
+                <li><a href="grupos.html" id="menu-grupos">Grupos</a></li>
+                <li id="menu-vendas"><a href="vendas.html">Vendas</a></li>
                 <li><a href="index.html" class="logout">Sair</a></li>
             </ul>
         </nav>
@@ -30,44 +31,77 @@
                 <h2>Produtos</h2>
                 <p>Gerencie blusas, ternos, gravatas, calças e sapatos.</p>
             </div>
+
             <div class="card hover" id="card-usuarios">
                 <h2>Usuários</h2>
                 <p>Controle quem tem acesso ao sistema.</p>
             </div>
+
             <div class="card hover" id="card-grupos">
                 <h2>Grupos</h2>
                 <p>Defina níveis e permissões de usuários.</p>
+            </div>
+
+            <!-- NOVO CARD: VENDAS -->
+            <div class="card hover" id="card-vendas">
+                <h2>Vendas</h2>
+                <p>Registre e consulte vendas realizadas.</p>
             </div>
         </section>
     </main>
 
     <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-        const userEmail = localStorage.getItem("usuarioLogado");
-        const welcomeMsg = document.getElementById("welcome-msg");
+document.addEventListener("DOMContentLoaded", () => {
 
-        if (!userEmail) {
-            alert("Você precisa estar logado para acessar o painel!");
-            window.location.href = "index.html";
-            return;
-        }
+    const usuario = (function(){
+        try { return JSON.parse(localStorage.getItem("usuario")); }
+        catch(e){ return null; }
+    })();
 
-        const nome = userEmail.split("@")[0];
-        welcomeMsg.textContent = `👋 Bem-vindo, ${nome}!`;
+    if (!usuario) {
+        alert("Você precisa estar logado!");
+        window.location.href = "index.html";
+        return;
+    }
+
+    // Mensagem personalizada
+    document.getElementById("welcome-msg").textContent = `👋 Bem-vindo, ${usuario.nome}!`;
+
+    // Controle de permissão por grupo
+    const isCliente = usuario.grupo_id === 3;
+
+    // Esconde menus do topo
+    if (isCliente) {
+        document.getElementById("menu-vendas").style.display = "none";
+        document.getElementById("menu-usuarios").style.display = "none";
+        document.getElementById("menu-grupos").style.display = "none";
+    }
+
+    // Controle de cards no dashboard
+    if (isCliente) {
+        document.getElementById("card-usuarios").style.display = "none";
+        document.getElementById("card-grupos").style.display = "none";
+        document.getElementById("card-vendas").style.display = "none";
+    }
+
+    // ---- REDIRECIONAMENTOS DOS CARDS ----
+    document.getElementById("card-produtos").addEventListener("click", () => {
+        window.location.href = "produtos.html";
     });
 
-    // Redirecionamentos dos cards
-    document.getElementById("card-produtos").addEventListener("click", () => window.location.href = "produtos.html");
-    document.getElementById("card-usuarios").addEventListener("click", () => window.location.href = "usuarios.html");
-    document.getElementById("card-grupos").addEventListener("click", () => window.location.href = "grupos.html");
-
-    // Logout
-    document.querySelectorAll(".logout").forEach(link => {
-        link.addEventListener("click", () => {
-            localStorage.removeItem("usuarioLogado");
-            window.location.href = "index.html";
-        });
+    document.getElementById("card-usuarios").addEventListener("click", () => {
+        window.location.href = "usuarios.html";
     });
+
+    document.getElementById("card-grupos").addEventListener("click", () => {
+        window.location.href = "grupos.html";
+    });
+
+    document.getElementById("card-vendas").addEventListener("click", () => {
+        window.location.href = "vendas.html";
+    });
+});
     </script>
+
 </body>
 </html>

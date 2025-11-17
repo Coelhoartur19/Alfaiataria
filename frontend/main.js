@@ -1,70 +1,115 @@
-// frontend/main.js
 const API_URL = "http://127.0.0.1:8000/api";
 
-/* ============================================================
-   FUNÇÃO AUXILIAR DE FETCH
-   ============================================================ */
+
+// ============================================================
+// HELPER CENTRAL DE REQUISIÇÕES
+// ============================================================
 async function apiRequest(url, options = {}) {
     try {
-        const resposta = await fetch(url, {
+        const response = await fetch(url, {
             headers: { "Content-Type": "application/json", ...(options.headers || {}) },
             ...options
         });
 
-        const data = await resposta.json().catch(() => null);
+        const data = await response.json().catch(() => null);
 
-        if (!resposta.ok) {
-            throw new Error(data?.detail || "Erro na requisição.");
+        if (!response.ok) {
+            throw new Error(data?.detail || data?.message || "Erro na requisição.");
         }
 
         return data;
-    } catch (erro) {
-        console.error("API ERROR:", erro);
-        alert(erro.message || "Erro inesperado.");
+    } catch (error) {
+        console.error("API ERROR:", error);
+        alert(error.message || "Erro inesperado.");
         return null;
     }
 }
 
-/* ============================================================
-   LISTAR PRODUTOS
-   ============================================================ */
-async function carregarProdutos() {
-    const tabela = document.querySelector("#lista-produtos tbody");
-    if (!tabela) return;
 
+// ============================================================
+// SESSÃO / PERMISSÕES
+// ============================================================
+function getCurrentUser() {
+    try {
+        return JSON.parse(localStorage.getItem("usuario") || "null");
+    } catch {
+        return null;
+    }
+}
+
+const isAdmin = (u) => u && u.grupo_id === 1;
+const isSeller = (u) => u && u.grupo_id === 2;
+const isClient = (u) => u && u.grupo_id === 3;
+
+
+// ============================================================
+// PRODUTOS
+// ============================================================
+
+async function carregarProdutos() {
+    let tbody = document.querySelector("#lista-produtos");
+
+    if (tbody?.tagName.toLowerCase() === "table")
+        tbody = tbody.querySelector("tbody");
+
+    if (!tbody)
+        tbody = document.querySelector("#lista-produtos tbody");
+
+    if (!tbody) return;
+
+    const user = getCurrentUser();
     const produtos = await apiRequest(`${API_URL}/produtos`);
     if (!produtos) return;
 
-    tabela.innerHTML = "";
+    tbody.innerHTML = "";
 
-    if (!Array.isArray(produtos) || produtos.length === 0) {
-        tabela.innerHTML = "<tr><td colspan='4'>Nenhum produto encontrado.</td></tr>";
+    if (produtos.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='5'>Nenhum produto encontrado.</td></tr>";
         return;
     }
 
-    const linhas = produtos.map(prod => `
-        <tr>
-            <td>${prod.id}</td>
-            <td>${prod.nome}</td>
-            <td>${prod.categoria}</td>
-            <td>${prod.preco?.toFixed?.(2) ?? "0.00"}</td>
-        </tr>
-    `).join("");
+    produtos.forEach(p => {
+        const tr = document.createElement("tr");
 
-    tabela.innerHTML = linhas;
+        let acoes = "";
+        if (isAdmin(user) || isSeller(user)) {
+            acoes = `
+                <button class="btn small editar" data-id="${p.id}">Editar</button>
+                <button class="btn small danger excluir" data-id="${p.id}">Excluir</button>
+            `;
+        } else if (isClient(user)) {
+            acoes = `<button class="btn small comprar" data-id="${p.id}">Comprar</button>`;
+        }
+
+        tr.innerHTML = `
+            <td>${p.id}</td>
+            <td>${p.nome}</td>
+            <td>${p.categoria ?? ""}</td>
+            <td>R$ ${Number(p.preco).toFixed(2)}</td>
+            <td>${acoes}</td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
-/* ============================================================
-   CADASTRAR PRODUTO
-   ============================================================ */
+
+// ------------------------------------------------------------
+// CADASTRAR PRODUTO
+// ------------------------------------------------------------
 async function cadastrarProduto(event) {
     event.preventDefault();
+
+    const user = getCurrentUser();
+    if (!isAdmin(user) && !isSeller(user)) {
+        alert("Sem permissão.");
+        return;
+    }
 
     const nome = document.querySelector("#nome-produto").value.trim();
     const categoria = document.querySelector("#categoria-produto").value.trim();
     const preco = parseFloat(document.querySelector("#preco-produto").value);
 
-    if (!nome || !categoria || isNaN(preco)) {
+    if (!nome || !categoria || Number.isNaN(preco)) {
         alert("Preencha todos os campos corretamente.");
         return;
     }
@@ -76,57 +121,132 @@ async function cadastrarProduto(event) {
 
     if (!data) return;
 
-    alert("Produto cadastrado com sucesso!");
+    alert("Produto cadastrado!");
     event.target.reset();
     carregarProdutos();
 }
 
-/* ============================================================
-   LISTAR USUÁRIOS
-   ============================================================ */
+
+// ------------------------------------------------------------
+// EDITAR PRODUTO
+// ------------------------------------------------------------
+async function editarProduto(id) {
+    const user = getCurrentUser();
+    if (!isAdmin(user) && !isSeller(user)) {
+        alert("Sem permissão para editar.");
+        return;
+    }
+
+    const lista = await apiRequest(`${API_URL}/produtos`);
+    const produto = lista?.find(p => Number(p.id) === Number(id));
+
+    if (!produto) {
+        alert("Produto não encontrado.");
+        return;
+    }
+
+    const novoNome = prompt("Nome:", produto.nome);
+    if (novoNome === null) return;
+
+    const novaCat = prompt("Categoria:", produto.categoria ?? "");
+    if (novaCat === null) return;
+
+    const precoStr = prompt("Preço:", produto.preco);
+    if (precoStr === null) return;
+
+    const novoPreco = parseFloat(precoStr.replace(",", "."));
+    if (Number.isNaN(novoPreco)) {
+        alert("Preço inválido.");
+        return;
+    }
+
+    const data = await apiRequest(`${API_URL}/produtos/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ nome: novoNome, categoria: novaCat, preco: novoPreco })
+    });
+
+    if (!data) return;
+
+    alert("Produto atualizado!");
+    carregarProdutos();
+}
+
+
+// ------------------------------------------------------------
+// EXCLUIR PRODUTO
+// ------------------------------------------------------------
+async function excluirProduto(id) {
+    const user = getCurrentUser();
+    if (!isAdmin(user) && !isSeller(user)) {
+        alert("Sem permissão.");
+        return;
+    }
+
+    if (!confirm("Tem certeza que deseja excluir?")) return;
+
+    const data = await apiRequest(`${API_URL}/produtos/${id}`, {
+        method: "DELETE"
+    });
+
+    if (!data) return;
+
+    alert(data.message || "Produto excluído!");
+    carregarProdutos();
+}
+
+
+// ============================================================
+// USUÁRIOS
+// ============================================================
+
 async function carregarUsuarios() {
     const tabela = document.querySelector("#tabela-usuarios");
     if (!tabela) return;
 
+    const user = getCurrentUser();
     const usuarios = await apiRequest(`${API_URL}/usuarios`);
     if (!usuarios) return;
 
     tabela.innerHTML = "";
 
-    if (!Array.isArray(usuarios) || usuarios.length === 0) {
-        tabela.innerHTML = "<tr><td colspan='4'>Nenhum usuário encontrado.</td></tr>";
-        return;
-    }
+    usuarios.forEach(u => {
+        const tr = document.createElement("tr");
 
-    usuarios.forEach(usuario => {
-        const linha = document.createElement("tr");
-        linha.innerHTML = `
-            <td>${usuario.nome}</td>
-            <td>${usuario.email}</td>
-            <td>${usuario.grupo_id}</td>
-            <td>
-                <button class="btn small danger" data-id="${usuario.id}">Excluir</button>
-            </td>
+        let acoes = "";
+        if (isAdmin(user)) {
+            acoes = `<button class="btn small danger excluir-usuario" data-id="${u.id}">Excluir</button>`;
+        } else {
+            acoes = `<span style="color:#777;">Sem permissão</span>`;
+        }
+
+        tr.innerHTML = `
+            <td>${u.id}</td>
+            <td>${u.nome}</td>
+            <td>${u.email}</td>
+            <td>${u.grupo_id}</td>
+            <td>${acoes}</td>
         `;
-        tabela.appendChild(linha);
+        tabela.appendChild(tr);
     });
 }
 
-/* ============================================================
-   CADASTRAR USUÁRIO
-   ============================================================ */
+
+// ------------------------------------------------------------
+// CADASTRAR USUÁRIO
+// ------------------------------------------------------------
 async function cadastrarUsuario(event) {
     event.preventDefault();
 
-    const nome = document.getElementById("nome").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const senha = document.getElementById("senha").value.trim();
-    const grupo_id = parseInt(document.getElementById("grupo").value, 10);
-
-    if (!nome || !email || !senha || isNaN(grupo_id)) {
-        alert("Preencha todos os campos corretamente.");
+    const user = getCurrentUser();
+    if (!isAdmin(user) && !isSeller(user)) {
+        alert("Sem permissão.");
         return;
     }
+
+    const nome = document.querySelector("#nome").value.trim();
+    const email = document.querySelector("#email").value.trim();
+    const senha = document.querySelector("#senha").value.trim();
+    const grupo_id = parseInt(document.querySelector("#grupo").value, 10);
 
     const data = await apiRequest(`${API_URL}/usuarios`, {
         method: "POST",
@@ -136,53 +256,122 @@ async function cadastrarUsuario(event) {
     if (!data) return;
 
     alert(data.message || "Usuário cadastrado!");
-    document.getElementById("formUsuario").reset();
+    event.target.reset();
     carregarUsuarios();
 }
 
-/* ============================================================
-   EXCLUIR USUÁRIO
-   ============================================================ */
+
+// ------------------------------------------------------------
+// EXCLUIR USUÁRIO
+// ------------------------------------------------------------
 async function excluirUsuarioPorId(id) {
+    const user = getCurrentUser();
+    if (!isAdmin(user)) {
+        alert("Somente administradores podem excluir usuários.");
+        return;
+    }
+
+    if (!confirm("Deseja excluir este usuário?")) return;
+
     const data = await apiRequest(`${API_URL}/usuarios/${id}`, {
         method: "DELETE"
     });
 
     if (!data) return;
 
-    alert(data.message || "Usuário excluído.");
+    alert(data.message || "Usuário excluído!");
     carregarUsuarios();
 }
 
-/* ============================================================
-   INICIALIZAÇÃO
-   ============================================================ */
-document.addEventListener("DOMContentLoaded", () => {
 
-    if (document.querySelector("#lista-produtos")) carregarProdutos();
-    if (document.querySelector("#tabela-usuarios")) carregarUsuarios();
+// ============================================================
+// GRUPOS
+// ============================================================
 
-    const formProduto = document.querySelector("#form-produto");
-    if (formProduto) formProduto.addEventListener("submit", cadastrarProduto);
+async function carregarGrupos() {
+    const lista = document.getElementById("lista-grupos");
+    if (!lista) return;
 
-    const formUsuario = document.getElementById("formUsuario");
-    if (formUsuario) formUsuario.addEventListener("submit", cadastrarUsuario);
+    lista.innerHTML = "<li>Carregando grupos...</li>";
 
-    const tabela = document.getElementById("tabela-usuarios");
-    if (tabela) {
-        tabela.addEventListener("click", (e) => {
-            if (e.target.classList.contains("danger")) {
-                const id = e.target.dataset.id;
-                if (confirm("Confirma exclusão do usuário?")) {
-                    excluirUsuarioPorId(id);
-                }
-            }
-        });
+    const data = await apiRequest(`${API_URL}/grupos`);
+    if (!data) {
+        lista.innerHTML = "<li>Erro ao carregar grupos.</li>";
+        return;
     }
 
-    document.querySelectorAll(".logout").forEach(link => {
-        link.addEventListener("click", () => {
-            localStorage.removeItem("usuarioLogado");
+    const grupos = data.grupos; // API retorna assim
+
+    if (!grupos || grupos.length === 0) {
+        lista.innerHTML = "<li>Nenhum grupo encontrado.</li>";
+        return;
+    }
+
+    lista.innerHTML = "";
+
+    grupos.forEach(g => {
+        const li = document.createElement("li");
+        li.textContent = `${g.nome} — ID: ${g.id} — ${g.descricao ?? ""}`;
+        lista.appendChild(li);
+    });
+}
+
+
+// ============================================================
+// INICIALIZAÇÃO GLOBAL
+// ============================================================
+document.addEventListener("DOMContentLoaded", () => {
+
+    const user = getCurrentUser();
+    if (!user) {
+        window.location.href = "index.html";
+        return;
+    }
+
+    // produtos
+    if (document.querySelector("#lista-produtos")) {
+        carregarProdutos();
+
+        const form = document.querySelector("#form-produto");
+        if (form && !isClient(user)) form.addEventListener("submit", cadastrarProduto);
+        if (form && isClient(user)) form.style.display = "none";
+    }
+
+    // usuários
+    if (document.querySelector("#tabela-usuarios")) {
+        if (!isAdmin(user)) {
+            alert("Apenas administradores podem acessar usuários.");
+            window.location.href = "dashboard.html";
+            return;
+        }
+
+        carregarUsuarios();
+        document.querySelector("#formUsuario")?.addEventListener("submit", cadastrarUsuario);
+    }
+
+    // grupos
+    if (document.querySelector("#lista-grupos")) {
+        if (!isAdmin(user)) {
+            alert("Somente administradores podem acessar grupos.");
+            window.location.href = "dashboard.html";
+            return;
+        }
+
+        carregarGrupos();
+    }
+
+    // eventos globais de clique
+    document.addEventListener("click", (e) => {
+        if (e.target.classList.contains("editar")) editarProduto(e.target.dataset.id);
+        if (e.target.classList.contains("excluir")) excluirProduto(e.target.dataset.id);
+        if (e.target.classList.contains("excluir-usuario")) excluirUsuarioPorId(e.target.dataset.id);
+        if (e.target.classList.contains("comprar")) alert("Carrinho será implementado futuramente!");
+    });
+
+    // logout
+    document.querySelectorAll(".logout").forEach(btn => {
+        btn.addEventListener("click", () => {
+            localStorage.removeItem("usuario");
             window.location.href = "index.html";
         });
     });

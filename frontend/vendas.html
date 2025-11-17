@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendas | Alfaiataria</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<header class="main-header">
+    <div class="logo">Alfaiataria</div>
+    <nav>
+        <ul class="nav-links">
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="produtos.html">Produtos</a></li>
+            <li><a href="usuarios.html">Usuários</a></li>
+            <li><a href="grupos.html">Grupos</a></li>
+            <li id="menu-vendas"><a href="vendas.html" class="active">Vendas</a></li>
+            <li><a href="index.html" class="logout">Sair</a></li>
+        </ul>
+    </nav>
+</header>
+
+<main class="content fade-in">
+    <h1>Registrar Venda</h1>
+
+    <section class="crud-form">
+        <select id="produto-select">
+            <option value="">Selecione um produto</option>
+        </select>
+
+        <input type="number" id="quantidade" placeholder="Quantidade" min="1" value="1">
+        <button class="btn" id="add-item">Adicionar Item</button>
+    </section>
+
+    <h2>Itens da Venda</h2>
+    <table class="crud-table">
+        <thead>
+            <tr>
+                <th>Produto</th>
+                <th>Qtd</th>
+                <th>Preço</th>
+                <th>Total</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="itens-venda"></tbody>
+    </table>
+
+    <h3>Total Geral: R$ <span id="total-geral">0.00</span></h3>
+
+    <button class="btn" id="finalizar-venda">Finalizar Venda</button>
+</main>
+
+<!-- Primeiro carregue o JS externo   -->
+<script src="vendas.js"></script>
+
+<!--script interno separado -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    let usuario = null;
+    try {
+        usuario = JSON.parse(localStorage.getItem("usuario"));
+    } catch {
+        usuario = null;
+    }
+
+    if (!usuario) {
+        alert("Você precisa estar logado!");
+        window.location.href = "index.html";
+        return;
+    }
+
+    // Controle de acesso
+    if (usuario.grupo_id === 3) {
+        alert("Clientes não podem acessar vendas.");
+        window.location.href = "dashboard.html";
+        return;
+    }
+
+    // inicializar funções da venda
+    console.log("Usuário validado. Página de vendas carregada!");
+});
+</script>
+
+</body>
+</html>
