@@ -1,10 +1,10 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, List
 
 
-# -------------------------------------
+# -------------------------------
 # USUÁRIOS
-# -------------------------------------
+# -------------------------------
 class UsuarioCreate(BaseModel):
     nome: str
     email: EmailStr
@@ -19,17 +19,21 @@ class UsuarioOut(BaseModel):
     grupo_id: int
 
     class Config:
-        from_attributes = True  # Pydantic V2
+        from_attributes = True
 
 
-# -------------------------------------
+# -------------------------------
 # PRODUTOS
-# -------------------------------------
+# -------------------------------
 class ProdutoBase(BaseModel):
     nome: str
     categoria: Optional[str] = None
     preco: float
     estoque: Optional[int] = 0
+
+
+class ProdutoCreate(ProdutoBase):
+    pass
 
 
 class ProdutoOut(ProdutoBase):
@@ -39,9 +43,9 @@ class ProdutoOut(ProdutoBase):
         from_attributes = True
 
 
-# -------------------------------------
+# -------------------------------
 # GRUPOS
-# -------------------------------------
+# -------------------------------
 class GrupoOut(BaseModel):
     id: int
     nome: str
@@ -50,17 +54,17 @@ class GrupoOut(BaseModel):
     class Config:
         from_attributes = True
 
-# -------------------------------------
-# LOGIN
-# -------------------------------------
-class LoginRequest(BaseModel):
-    email: EmailStr
-    senha: str
+
+# -------------------------------
+# VENDAS
+# -------------------------------
+class ItemVenda(BaseModel):
+    id: int
+    quantidade: int
+    preco: float
+    total: float
 
 
-class LoginResponse(BaseModel):
-    mensagem: str
-    id: str
-    nome: str
-    email: str
-    grupo: str
+class VendaCreate(BaseModel):
+    id_usuario: int
+    itens: List[ItemVenda]

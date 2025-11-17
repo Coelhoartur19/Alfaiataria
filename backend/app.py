@@ -1,21 +1,19 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-
+from sqlalchemy.exc import IntegrityError
 from .database import Base, engine, SessionLocal
 from . import models
-from .database_mongo import col_usuarios
-from .schemas import UsuarioCreate, UsuarioOut, ProdutoBase, ProdutoOut
+from .schemas import ProdutoBase, UsuarioCreate, UsuarioOut
 from . import security
 
-# ---------------------------------------------------------
-# IMPORTAR ROTEADORES
-# ---------------------------------------------------------
-from .routers import grupos
+# Roteadores
+from .routers import vendas, grupos, usuarios, produtos
+
 
 # ---------------------------------------------------------
-# CRIAR APP (DEVE VIR ANTES DE QUALQUER include_router)
+# INICIAR APP
 # ---------------------------------------------------------
 app = FastAPI(title="API Loja Alfaiataria")
 
@@ -30,13 +28,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---------------------------------------------------------
-# Criar tabelas no MySQL (se ainda não existirem)
-# ---------------------------------------------------------
+# Criar tabelas no MySQL
 Base.metadata.create_all(bind=engine)
 
+
 # ---------------------------------------------------------
-# Dependência do banco
+# DEPENDÊNCIA DO BANCO
 # ---------------------------------------------------------
 def get_db():
     db = SessionLocal()
@@ -45,10 +42,15 @@ def get_db():
     finally:
         db.close()
 
+
 # ---------------------------------------------------------
-# INCLUIR ROTEADORES (AGORA SIM, APP EXISTE)
+# INCLUIR ROTEADORES
 # ---------------------------------------------------------
+app.include_router(vendas.router, prefix="/api")
 app.include_router(grupos.router)
+app.include_router(usuarios.router, prefix="/api")
+app.include_router(produtos.router, prefix="/api")
+
 
 # ---------------------------------------------------------
 # ROTA RAIZ
@@ -57,35 +59,40 @@ app.include_router(grupos.router)
 def raiz():
     return {"status": "API Loja Online", "versao": "2.0"}
 
+
 # ---------------------------------------------------------
-# LOGIN (MongoDB)
+# LOGIN
 # ---------------------------------------------------------
 class LoginRequest(BaseModel):
-    usuario: str
+    usuario: str   # email
     senha: str
 
 @app.post("/api/login")
-def login(request: LoginRequest):
-    usuario = col_usuarios.find_one({"email": request.usuario})
+def login(request: LoginRequest, db: Session = Depends(get_db)):
+
+    usuario = db.query(models.Usuario).filter(
+        models.Usuario.Email == request.usuario
+    ).first()
 
     if not usuario:
         raise HTTPException(status_code=401, detail="Usuário não encontrado")
 
-    senha_salva = usuario.get("senha")
-    if senha_salva != request.senha:
+    if not security.verify_password(request.senha, usuario.SenhaHash):
         raise HTTPException(status_code=401, detail="Senha incorreta")
 
     return {
-        "mensagem": f"Login realizado com sucesso, {usuario['nome']}!",
+        "mensagem": f"Login realizado com sucesso, {usuario.Nome}!",
         "usuario": {
-            "nome": usuario["nome"],
-            "email": usuario["email"],
-            "grupo": usuario.get("grupo", "Usuário")
+            "id": usuario.IDUsuario,
+            "nome": usuario.Nome,
+            "email": usuario.Email,
+            "grupo_id": usuario.IDGrupo
         }
     }
 
+
 # ---------------------------------------------------------
-# PRODUTOS (MySQL)
+# PRODUTOS - LISTAR
 # ---------------------------------------------------------
 @app.get("/api/produtos")
 def listar_produtos(db: Session = Depends(get_db)):
@@ -102,6 +109,10 @@ def listar_produtos(db: Session = Depends(get_db)):
         for p in produtos
     ]
 
+
+# ---------------------------------------------------------
+# PRODUTOS - CADASTRAR
+# ---------------------------------------------------------
 @app.post("/api/produtos")
 def adicionar_produto(produto: ProdutoBase, db: Session = Depends(get_db)):
     try:
@@ -116,21 +127,21 @@ def adicionar_produto(produto: ProdutoBase, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(novo)
 
-        return {
-            "message": "Produto adicionado com sucesso!",
-            "produto": {
-                "id": novo.IDProduto,
-                "nome": novo.Nome,
-                "categoria": novo.Categoria,
-                "preco": novo.Preco,
-                "estoque": novo.Estoque
-            }
-        }
+        return {"message": "Produto adicionado com sucesso!", "produto": {
+            "id": novo.IDProduto,
+            "nome": novo.Nome,
+            "categoria": novo.Categoria,
+            "preco": novo.Preco,
+            "estoque": novo.Estoque
+        }}
 
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=400, detail=f"Erro ao adicionar produto: {e}")
 
+# ---------------------------------------------------------
+# PRODUTOS - EXCLUIR (substitua a sua implementação por esta)
+# ---------------------------------------------------------
 @app.delete("/api/produtos/{produto_id}")
 def excluir_produto(produto_id: int, db: Session = Depends(get_db)):
     produto = db.query(models.Produto).filter(models.Produto.IDProduto == produto_id).first()
@@ -138,13 +149,26 @@ def excluir_produto(produto_id: int, db: Session = Depends(get_db)):
     if not produto:
         raise HTTPException(status_code=404, detail="Produto não encontrado")
 
-    db.delete(produto)
-    db.commit()
+    try:
+        db.delete(produto)
+        db.commit()
+        return {"message": "Produto excluído com sucesso!"}
+    except IntegrityError as ie:
+        db.rollback()
+        # Mensagem mais clara para frontend — o texto pode ser ajustado
+        raise HTTPException(
+            status_code=400,
+            detail="Não é possível excluir este produto: já existe(m) venda(s) vinculada(s) a ele."
+        )
+    except Exception as e:
+        db.rollback()
+        # fallback genérico
+        raise HTTPException(status_code=500, detail=f"Erro ao excluir produto: {e}")
 
-    return {"message": "Produto excluído com sucesso!"}
+
 
 # ---------------------------------------------------------
-# USUÁRIOS (MySQL)
+# USUÁRIOS - LISTAR
 # ---------------------------------------------------------
 @app.get("/api/usuarios")
 def listar_usuarios(db: Session = Depends(get_db)):
@@ -160,6 +184,10 @@ def listar_usuarios(db: Session = Depends(get_db)):
         for u in usuarios
     ]
 
+
+# ---------------------------------------------------------
+# USUÁRIOS - CADASTRAR
+# ---------------------------------------------------------
 class UsuarioCreateIn(BaseModel):
     nome: str
     email: str
@@ -192,15 +220,16 @@ def adicionar_usuario(payload: UsuarioCreateIn, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(novo)
 
-        return {
-            "message": "Usuário cadastrado com sucesso!",
-            "id": novo.IDUsuario
-        }
+        return {"message": "Usuário cadastrado com sucesso!", "id": novo.IDUsuario}
 
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=400, detail=f"Erro ao cadastrar: {e}")
 
+
+# ---------------------------------------------------------
+# USUÁRIOS - EXCLUIR
+# ---------------------------------------------------------
 @app.delete("/api/usuarios/{id}")
 def excluir_usuario(id: int, db: Session = Depends(get_db)):
     usuario = db.query(models.Usuario).filter(models.Usuario.IDUsuario == id).first()
