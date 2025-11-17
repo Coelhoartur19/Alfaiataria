@@ -1,21 +1,28 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Text, TIMESTAMP
+from sqlalchemy import Column, Integer, String, ForeignKey, Double, Text, TIMESTAMP, Enum
 from sqlalchemy.orm import relationship
 from .database import Base
 
+
+# ---------------------------------------
+# TABELA: grupos_usuarios
+# ---------------------------------------
 class GrupoUsuario(Base):
     __tablename__ = "grupos_usuarios"
 
-    IDGrupo = Column(Integer, primary_key=True, index=True)
+    IDGrupo = Column(Integer, primary_key=True, autoincrement=True)
     NomeGrupo = Column(String(60), unique=True, nullable=False)
     Descricao = Column(String(255))
 
     usuarios = relationship("Usuario", back_populates="grupo")
 
 
+# ---------------------------------------
+# TABELA: usuarios
+# ---------------------------------------
 class Usuario(Base):
     __tablename__ = "usuarios"
 
-    IDUsuario = Column(Integer, primary_key=True, index=True)
+    IDUsuario = Column(Integer, primary_key=True, autoincrement=True)
     Nome = Column(String(120), nullable=False)
     Email = Column(String(150), unique=True)
     SenhaHash = Column(String(255))
@@ -25,59 +32,66 @@ class Usuario(Base):
     grupo = relationship("GrupoUsuario", back_populates="usuarios")
 
 
-class Cliente(Base):
-    __tablename__ = "Clientes"
-
-    IDCliente = Column(Integer, primary_key=True, index=True)
-    Nome = Column(String(120), nullable=False)
-    CPF = Column(String(11), unique=True)
-    CriadoEm = Column(TIMESTAMP)
-
-
-class Funcionario(Base):
-    __tablename__ = "Funcionarios"
-
-    IDFuncionario = Column(Integer, primary_key=True, index=True)
-    Nome = Column(String(120), nullable=False)
-    CPF = Column(String(11), unique=True)
-    Cargo = Column(String(60))
-    Salario = Column(Float)
-    CriadoEm = Column(TIMESTAMP)
-
-
+# ---------------------------------------
+# TABELA: Produtos
+# ---------------------------------------
 class Produto(Base):
     __tablename__ = "Produtos"
 
-    IDProduto = Column(Integer, primary_key=True, index=True)
+    IDProduto = Column(Integer, primary_key=True, autoincrement=True)
     Nome = Column(String(120), nullable=False)
     Categoria = Column(String(80))
     Descricao = Column(Text)
-    Preco = Column(Float, nullable=False)
+    Preco = Column(Double, nullable=False)
     Estoque = Column(Integer, nullable=False, default=0)
 
 
+# ---------------------------------------
+# TABELA: Vendas
+# ---------------------------------------
 class Venda(Base):
     __tablename__ = "Vendas"
 
-    IDVenda = Column(Integer, primary_key=True, index=True)
-    IDCliente = Column(Integer, ForeignKey("Clientes.IDCliente"), nullable=False)
-    IDFuncionario = Column(Integer, ForeignKey("Funcionarios.IDFuncionario"), nullable=False)
+    IDVenda = Column(Integer, primary_key=True, autoincrement=True)
+    IDUsuarioCliente = Column(Integer, ForeignKey("usuarios.IDUsuario"), nullable=False)
+    IDUsuarioAtendente = Column(Integer, ForeignKey("usuarios.IDUsuario"), nullable=False)
     DataVenda = Column(TIMESTAMP)
-    Total = Column(Float, default=0)
-
-    cliente = relationship("Cliente")
-    funcionario = relationship("Funcionario")
-    itens = relationship("ItemVenda", back_populates="venda")
+    Total = Column(Double, nullable=False, default=0)
 
 
+# ---------------------------------------
+# TABELA: ItensVenda
+# ---------------------------------------
 class ItemVenda(Base):
     __tablename__ = "ItensVenda"
 
-    IDItem = Column(Integer, primary_key=True, index=True)
+    IDItem = Column(Integer, primary_key=True, autoincrement=True)
     IDVenda = Column(Integer, ForeignKey("Vendas.IDVenda"), nullable=False)
     IDProduto = Column(Integer, ForeignKey("Produtos.IDProduto"), nullable=False)
     Quantidade = Column(Integer, nullable=False)
-    PrecoUnitario = Column(Float, nullable=False)
+    PrecoUnitario = Column(Double, nullable=False)
 
-    venda = relationship("Venda", back_populates="itens")
-    produto = relationship("Produto")
+
+# ---------------------------------------
+# TABELA: MovimentacoesEstoque
+# ---------------------------------------
+class MovimentacaoEstoque(Base):
+    __tablename__ = "MovimentacoesEstoque"
+
+    IDMovimentacao = Column(Integer, primary_key=True, autoincrement=True)
+    IDProduto = Column(Integer, ForeignKey("Produtos.IDProduto"), nullable=False)
+    TipoMovimentacao = Column(Enum("Entrada", "Saída"), nullable=False)
+    Quantidade = Column(Integer, nullable=False)
+    DataMovimentacao = Column(TIMESTAMP)
+
+
+# ---------------------------------------
+# TABELA: AvisosEstoque
+# ---------------------------------------
+class AvisoEstoque(Base):
+    __tablename__ = "AvisosEstoque"
+
+    IDAviso = Column(Integer, primary_key=True, autoincrement=True)
+    IDProduto = Column(Integer, ForeignKey("Produtos.IDProduto"), nullable=False)
+    Mensagem = Column(String(255), nullable=False)
+    DataAviso = Column(TIMESTAMP)

@@ -1,48 +1,66 @@
-# backend/schemas.py
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 
-# Produtos
-class ProdutoBase(BaseModel):
-    Nome: str
-    Categoria: Optional[str] = None
-    Descricao: Optional[str] = None
-    Preco: float
-    Estoque: Optional[int] = 0
 
-class ProdutoCreate(ProdutoBase):
-    pass
+# -------------------------------------
+# USUÁRIOS
+# -------------------------------------
+class UsuarioCreate(BaseModel):
+    nome: str
+    email: EmailStr
+    senha: str
+    grupo_id: int
+
+
+class UsuarioOut(BaseModel):
+    id: int
+    nome: str
+    email: EmailStr
+    grupo_id: int
+
+    class Config:
+        from_attributes = True  # Pydantic V2
+
+
+# -------------------------------------
+# PRODUTOS
+# -------------------------------------
+class ProdutoBase(BaseModel):
+    nome: str
+    categoria: Optional[str] = None
+    preco: float
+    estoque: Optional[int] = 0
+
 
 class ProdutoOut(ProdutoBase):
-    IDProduto: int
+    id: int
+
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-# Grupos
-class GrupoBase(BaseModel):
-    NomeGrupo: str
-    Descricao: Optional[str] = None
 
-class GrupoOut(GrupoBase):
-    IDGrupo: int
+# -------------------------------------
+# GRUPOS
+# -------------------------------------
+class GrupoOut(BaseModel):
+    id: int
+    nome: str
+    descricao: Optional[str] = None
+
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-# Usuarios
-class UsuarioBase(BaseModel):
-    Nome: str
-    Email: Optional[EmailStr] = None
-    IDGrupo: int
+# -------------------------------------
+# LOGIN
+# -------------------------------------
+class LoginRequest(BaseModel):
+    email: EmailStr
+    senha: str
 
-class UsuarioCreate(UsuarioBase):
-    Senha: str
 
-class UsuarioOut(UsuarioBase):
-    IDUsuario: int
-    class Config:
-        orm_mode = True
-
-# Auth
-class Token(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
+class LoginResponse(BaseModel):
+    mensagem: str
+    id: str
+    nome: str
+    email: str
+    grupo: str

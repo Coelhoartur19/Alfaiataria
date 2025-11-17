@@ -1,18 +1,17 @@
-# backend/crud.py
 from sqlalchemy.orm import Session
 from . import models, schemas, security
 
-# Produtos
+# Produtos (MySQL)
 def listar_produtos(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Produto).offset(skip).limit(limit).all()
 
-def criar_produto(db: Session, produto: schemas.ProdutoCreate):
+def criar_produto(db: Session, produto: schemas.ProdutoBase):
     db_obj = models.Produto(
-        Nome=produto.Nome,
-        Categoria=produto.Categoria,
-        Descricao=produto.Descricao,
-        Preco=produto.Preco,
-        Estoque=produto.Estoque or 0
+        Nome=produto.nome,
+        Categoria=produto.categoria,
+        Descricao="",
+        Preco=produto.preco,
+        Estoque=produto.estoque or 0
     )
     db.add(db_obj)
     db.commit()
@@ -22,14 +21,13 @@ def criar_produto(db: Session, produto: schemas.ProdutoCreate):
 def buscar_produto(db: Session, id_produto: int):
     return db.query(models.Produto).filter(models.Produto.IDProduto == id_produto).first()
 
-def atualizar_produto(db: Session, id_produto: int, produto: schemas.ProdutoCreate):
+def atualizar_produto(db: Session, id_produto: int, produto: schemas.ProdutoBase):
     db_obj = buscar_produto(db, id_produto)
     if db_obj:
-        db_obj.Nome = produto.Nome
-        db_obj.Categoria = produto.Categoria
-        db_obj.Descricao = produto.Descricao
-        db_obj.Preco = produto.Preco
-        db_obj.Estoque = produto.Estoque
+        db_obj.Nome = produto.nome
+        db_obj.Categoria = produto.categoria
+        db_obj.Preco = produto.preco
+        db_obj.Estoque = produto.estoque
         db.commit()
         db.refresh(db_obj)
     return db_obj
@@ -43,27 +41,40 @@ def remover_produto(db: Session, id_produto: int):
 
 # Grupos
 def listar_grupos(db: Session):
-    return db.query(models.Grupo).all()
+    return db.query(models.GrupoUsuario).all()
 
 def buscar_grupo_por_id(db: Session, id_grupo: int):
-    return db.query(models.Grupo).filter(models.Grupo.IDGrupo == id_grupo).first()
+    return db.query(models.GrupoUsuario).filter(models.GrupoUsuario.IDGrupo == id_grupo).first()
 
-# Usuarios
+# Usuarios (MySQL)
 def listar_usuarios(db: Session):
     return db.query(models.Usuario).all()
 
 def criar_usuario(db: Session, usuario: schemas.UsuarioCreate):
-    hashed = security.hash_password(usuario.Senha)
+    hashed = security.hash_password(usuario.senha)
     db_obj = models.Usuario(
-        Nome=usuario.Nome,
-        Email=usuario.Email,
-        IDGrupo=usuario.IDGrupo,
+        Nome=usuario.nome,
+        Email=usuario.email,
+        IDGrupo=usuario.grupo_id,
         SenhaHash=hashed
     )
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
     return db_obj
+
+def criar_usuario(db: Session, usuario: schemas.UsuarioCreate):
+    novo = models.Usuario(
+        NomeUsuario=usuario.NomeUsuario,
+        Email=usuario.Email,
+        Senha=usuario.Senha,
+        IDGrupo=3  # CLIENTE fixo
+    )
+    db.add(novo)
+    db.commit()
+    db.refresh(novo)
+    return novo
+
 
 def buscar_usuario_por_email(db: Session, email: str):
     return db.query(models.Usuario).filter(models.Usuario.Email == email).first()
