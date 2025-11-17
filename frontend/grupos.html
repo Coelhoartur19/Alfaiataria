@@ -24,14 +24,61 @@
 
     <main class="content fade-in">
         <h1>Grupos de Usuários</h1>
-        <ul class="group-list">
-            <li>Administrador</li>
-            <li>Vendedor</li>
-            <li>Gerente</li>
+
+        <ul class="group-list" id="lista-grupos">
+            <li>Carregando grupos...</li>
         </ul>
     </main>
 
-    <script src="js/main.js"></script>
-</body>
+   <script>
+document.addEventListener("DOMContentLoaded", async () => {
 
+    const userEmail = localStorage.getItem("usuarioLogado");
+    if (!userEmail) {
+        alert("Você precisa estar logado!");
+        window.location.href = "index.html";
+        return;
+    }
+
+    try {
+        const response = await fetch("http://127.0.0.1:8000/api/grupos");
+        const data = await response.json();
+
+        const grupos = data.grupos;  // <-- ESTA ERA A PARTE QUE FALTAVA
+
+        const lista = document.getElementById("lista-grupos");
+        lista.innerHTML = "";
+
+        if (!Array.isArray(grupos) || grupos.length === 0) {
+            lista.innerHTML = "<li>Nenhum grupo encontrado.</li>";
+            return;
+        }
+
+        grupos.forEach(g => {
+            const li = document.createElement("li");
+
+            li.textContent = `${g.nome} — ID: ${g.id} — ${g.descricao}`;
+
+            lista.appendChild(li);
+        });
+
+    } catch (error) {
+        console.error("Erro ao carregar grupos:", error);
+        document.getElementById("lista-grupos").innerHTML =
+            "<li>Erro ao conectar ao servidor.</li>";
+    }
+});
+
+document.querySelectorAll(".logout").forEach(link => {
+    link.addEventListener("click", () => {
+        localStorage.removeItem("usuarioLogado");
+        window.location.href = "index.html";
+    });
+});
+</script>
+
+
+
+
+</body>
 </html>

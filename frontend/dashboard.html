@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,26 +22,52 @@
     </header>
 
     <main class="content fade-in">
-        <h1>Bem-vindo ao painel</h1>
+        <h1 id="welcome-msg">Bem-vindo ao painel</h1>
         <p>Gerencie produtos, usuários e grupos com facilidade.</p>
 
         <section class="cards">
-            <div class="card hover">
+            <div class="card hover" id="card-produtos">
                 <h2>Produtos</h2>
                 <p>Gerencie blusas, ternos, gravatas, calças e sapatos.</p>
             </div>
-            <div class="card hover">
+            <div class="card hover" id="card-usuarios">
                 <h2>Usuários</h2>
                 <p>Controle quem tem acesso ao sistema.</p>
             </div>
-            <div class="card hover">
+            <div class="card hover" id="card-grupos">
                 <h2>Grupos</h2>
                 <p>Defina níveis e permissões de usuários.</p>
             </div>
         </section>
     </main>
 
-    <script src="js/main.js"></script>
-</body>
+    <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        const userEmail = localStorage.getItem("usuarioLogado");
+        const welcomeMsg = document.getElementById("welcome-msg");
 
+        if (!userEmail) {
+            alert("Você precisa estar logado para acessar o painel!");
+            window.location.href = "index.html";
+            return;
+        }
+
+        const nome = userEmail.split("@")[0];
+        welcomeMsg.textContent = `👋 Bem-vindo, ${nome}!`;
+    });
+
+    // Redirecionamentos dos cards
+    document.getElementById("card-produtos").addEventListener("click", () => window.location.href = "produtos.html");
+    document.getElementById("card-usuarios").addEventListener("click", () => window.location.href = "usuarios.html");
+    document.getElementById("card-grupos").addEventListener("click", () => window.location.href = "grupos.html");
+
+    // Logout
+    document.querySelectorAll(".logout").forEach(link => {
+        link.addEventListener("click", () => {
+            localStorage.removeItem("usuarioLogado");
+            window.location.href = "index.html";
+        });
+    });
+    </script>
+</body>
 </html>

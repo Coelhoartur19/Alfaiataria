@@ -9,53 +9,178 @@
 </head>
 
 <body>
-    <header class="main-header">
-        <div class="logo">Alfaiataria</div>
-        <nav>
-            <ul class="nav-links">
-                <li><a href="dashboard.html">Dashboard</a></li>
-                <li><a href="produtos.html" class="active">Produtos</a></li>
-                <li><a href="usuarios.html">Usuários</a></li>
-                <li><a href="grupos.html">Grupos</a></li>
-                <li><a href="index.html" class="logout">Sair</a></li>
-            </ul>
-        </nav>
-    </header>
+<header class="main-header">
+    <div class="logo">Alfaiataria</div>
+    <nav>
+        <ul class="nav-links">
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="produtos.html" class="active">Produtos</a></li>
+            <li><a href="usuarios.html">Usuários</a></li>
+            <li><a href="grupos.html">Grupos</a></li>
+            <li><a href="index.html" class="logout">Sair</a></li>
+        </ul>
+    </nav>
+</header>
 
-    <main class="content fade-in">
-        <h1>Gerenciar Produtos</h1>
+<main class="content fade-in">
+    <h1>Gerenciar Produtos</h1>
 
-        <form class="crud-form">
-            <input type="text" placeholder="Nome do produto" required>
-            <input type="text" placeholder="Categoria" required>
-            <input type="number" placeholder="Preço (R$)" required>
-            <button class="btn">Adicionar</button>
-        </form>
+    <!-- FORM CORRIGIDO PARA BATER COM SEU main.js -->
+    <form class="crud-form" id="form-produto">
+        <input type="text" id="nome-produto" placeholder="Nome do produto" required>
+        <input type="text" id="categoria-produto" placeholder="Categoria" required>
+        <input type="number" id="preco-produto" placeholder="Preço (R$)" required>
+        <button class="btn" type="submit">Adicionar</button>
+    </form>
 
-        <table class="crud-table">
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Categoria</th>
-                    <th>Preço</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Blusa Social</td>
-                    <td>Blusa</td>
-                    <td>199,90</td>
+    <table class="crud-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Categoria</th>
+                <th>Preço</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="lista-produtos">
+            <tr><td colspan="5">Carregando produtos...</td></tr>
+        </tbody>
+    </table>
+</main>
+
+<script>
+const API_URL = "http://127.0.0.1:8000/api";
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    // --- Proteção de Login ---
+    const user = localStorage.getItem("usuarioLogado");
+    if (!user) {
+        alert("Você precisa estar logado para acessar esta página!");
+        window.location.href = "index.html";
+        return;
+    }
+
+    const tabela = document.getElementById("lista-produtos");
+    const form = document.getElementById("form-produto");
+
+    // ============================================================
+    // CARREGAR PRODUTOS
+    // ============================================================
+    async function carregarProdutos() {
+        tabela.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
+
+        try {
+            const response = await fetch(`${API_URL}/produtos`);
+            const produtos = await response.json();  // SUA API RETORNA LISTA DIRETA
+
+            tabela.innerHTML = "";
+
+            if (!Array.isArray(produtos) || produtos.length === 0) {
+                tabela.innerHTML = "<tr><td colspan='5'>Nenhum produto encontrado.</td></tr>";
+                return;
+            }
+
+            produtos.forEach(p => {
+                const tr = document.createElement("tr");
+
+                tr.innerHTML = `
+                    <td>${p.id}</td>
+                    <td>${p.nome}</td>
+                    <td>${p.categoria}</td>
+                    <td>R$ ${p.preco.toFixed(2)}</td>
                     <td>
-                        <button class="btn small">Editar</button>
-                        <button class="btn small danger">Excluir</button>
+                        <button class="btn small danger excluir" data-id="${p.id}">Excluir</button>
                     </td>
-                </tr>
-            </tbody>
-        </table>
-    </main>
+                `;
 
-    <script src="js/main.js"></script>
+                tabela.appendChild(tr);
+            });
+
+        } catch (erro) {
+            console.error("Erro ao carregar produtos:", erro);
+            tabela.innerHTML = "<tr><td colspan='5'>Erro ao conectar ao servidor.</td></tr>";
+        }
+    }
+
+    carregarProdutos();
+
+    // ============================================================
+    // ADICIONAR PRODUTO
+    // ============================================================
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const nome = document.getElementById("nome-produto").value;
+        const categoria = document.getElementById("categoria-produto").value;
+        const preco = parseFloat(document.getElementById("preco-produto").value);
+
+        try {
+            const response = await fetch(`${API_URL}/produtos`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nome, categoria, preco })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(data.detail || "Erro ao cadastrar produto.");
+                return;
+            }
+
+            alert("Produto cadastrado!");
+            form.reset();
+            carregarProdutos();
+
+        } catch (erro) {
+            console.error("Erro ao cadastrar:", erro);
+            alert("Erro ao conectar ao servidor.");
+        }
+    });
+
+    // ============================================================
+    // EXCLUIR PRODUTO
+    // ============================================================
+    tabela.addEventListener("click", async (e) => {
+        if (e.target.classList.contains("excluir")) {
+            const id = e.target.dataset.id;
+
+            if (!confirm("Deseja realmente excluir?")) return;
+
+            try {
+                const response = await fetch(`${API_URL}/produtos/${id}`, {
+                    method: "DELETE"
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert(data.detail || "Erro ao excluir produto.");
+                    return;
+                }
+
+                alert("Produto excluído!");
+                carregarProdutos();
+
+            } catch (erro) {
+                alert("Erro ao conectar ao servidor.");
+            }
+        }
+    });
+
+    // ============================================================
+    // LOGOUT
+    // ============================================================
+    document.querySelectorAll(".logout").forEach(link => {
+        link.addEventListener("click", () => {
+            localStorage.removeItem("usuarioLogado");
+            window.location.href = "index.html";
+        });
+    });
+});
+</script>
+
 </body>
-
 </html>

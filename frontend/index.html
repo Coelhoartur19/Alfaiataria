@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,16 +12,54 @@
         <h1>Alfaiataria</h1>
         <p class="subtitle">A elegância começa aqui</p>
 
-        <form class="login-form">
-            <input type="email" placeholder="E-mail" required>
-            <input type="password" placeholder="Senha" required>
+        <!-- Formulário de login -->
+        <form id="formLogin" class="login-form">
+            <input type="email" id="usuario" placeholder="E-mail" required>
+            <input type="password" id="senha" placeholder="Senha" required>
             <button type="submit" class="btn">Entrar</button>
         </form>
 
         <p class="note">Use suas credenciais para acessar o sistema</p>
     </div>
 
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const form = document.getElementById("formLogin");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const usuario = document.getElementById("usuario").value;
+            const senha = document.getElementById("senha").value;
+
+            try {
+                const response = await fetch("http://127.0.0.1:8000/api/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ usuario, senha }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert(data.mensagem || "Login realizado com sucesso!");
+                    
+                    // ✅ Salva o usuário logado
+                    localStorage.setItem("usuarioLogado", usuario);
+
+                    // ✅ Redireciona para o dashboard
+                    window.location.href = "dashboard.html";
+                } else {
+                    alert(data.detail || "Erro ao fazer login. Verifique suas credenciais.");
+                }
+            } catch (error) {
+                console.error("Erro ao conectar ao backend:", error);
+                alert("Não foi possível conectar ao servidor.");
+            }
+        });
+    });
+    </script>
+
     <script src="js/main.js"></script>
 </body>
-
 </html>
