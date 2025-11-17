@@ -92,18 +92,40 @@ def atualizar(produto_id: int, produto: ProdutoCreate, db: MySQLConnection = Dep
 
 
 # ---------------------------------------------------------
-# REMOVER PRODUTO
+# REMOVER PRODUTO (com verificação de vendas)
 # ---------------------------------------------------------
 @router.delete("/{produto_id}")
 def remover(produto_id: int, db: MySQLConnection = Depends(get_db)):
-    cursor = db.cursor()
+    cursor = db.cursor(dictionary=True)
 
-    cursor.execute("DELETE FROM produtos WHERE id = %s", (produto_id,))
-    db.commit()
+    # 1) Verificar se existe o produto
+    cursor.execute("SELECT id FROM produtos WHERE id = %s", (produto_id,))
+    produto = cursor.fetchone()
 
-    if cursor.rowcount == 0:
+    if not produto:
         cursor.close()
         raise HTTPException(status_code=404, detail="Produto não encontrado")
+
+    # 2) Verificar se o produto já foi vendido (impede exclusão)
+    cursor.execute("""
+        SELECT id 
+        FROM itensvenda 
+        WHERE IDProduto = %s 
+        LIMIT 1
+    """, (produto_id,))
+    
+    venda = cursor.fetchone()
+
+    if venda:
+        cursor.close()
+        raise HTTPException(
+            status_code=400,
+            detail="Este produto já foi vendido e não pode ser excluído."
+        )
+
+    # 3) Se não tem vendas, pode excluir
+    cursor.execute("DELETE FROM produtos WHERE id = %s", (produto_id,))
+    db.commit()
 
     cursor.close()
     return {"message": "Produto removido com sucesso!"}
