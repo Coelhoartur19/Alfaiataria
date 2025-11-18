@@ -184,18 +184,6 @@ BEGIN
   SELECT CONCAT('Produto ID ', p_IDProduto, ' atualizado!') AS Mensagem;
 END//
 
-DROP PROCEDURE IF EXISTS editar_descricao//
-CREATE PROCEDURE editar_descricao (
-  IN p_IDProduto INT,
-  IN p_Descricao TEXT
-)
-BEGIN
-  UPDATE Produtos
-  SET Descricao = p_Descricao
-  WHERE IDProduto = p_IDProduto;
-  SELECT CONCAT('Descrição do produto ID ', p_IDProduto, ' atualizada!') AS Mensagem;
-END//
-
 DROP PROCEDURE IF EXISTS deletar_produto//
 CREATE PROCEDURE deletar_produto (
   IN p_IDProduto INT
